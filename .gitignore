@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual Environments  
+.venv/
+venv/
+env/
+
+# Exclude ALL data and images
+dataset/
+dataset_organized/
+추가\ 데이터/
+cellpose/
+cellpose_env/
+build/
+dist/
+executable/
+data_export_txt/
+PrPC_pritamab/
+pritamab_analysis/
+특허/
+시스템\  이미지/
+temp_images/
+data/
+results/
+models/
+notebooks/
+docs/
+
+# Exclude all images
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.pdf
+*.xlsx
+*.xls
+*.csv
+*.json
+*.spec
+*.bat
+*.ps1
+*.lnk
+*.hwpx
+*.md
+
+# Keep only essential files
+!requirements.txt
+!packages.txt
+!README.md
+!.gitignore
+
+# Streamlit
+.streamlit/secrets.toml
