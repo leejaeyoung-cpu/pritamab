@@ -1,4 +1,5 @@
 """
+# -*- coding: utf-8 -*-
 항암제 추론 프로그램 - 완전 통합 버전
 모든 기능이 독립적으로 작동
 """
@@ -307,7 +308,7 @@ st.sidebar.markdown("""
 
 page = st.sidebar.radio(
     "페이지",
-    ["🏠 홈", "📊 데이터 현황", "👤 환자 정보 입력", "🔍 환자 조회", "📂 데이터 업로드", "🤖 AI 정밀 항암제 조합"],
+    ["🏠 홈", "📊 데이터 현황", "👤 환자 정보 입력", "🔍 환자 조회", "📂 데이터 업로드", "🤖 AI 정밀 항암제 조합", "🔬 세포 이미지 분석"],
     label_visibility="collapsed"
 )
 
@@ -3677,3 +3678,15 @@ elif page == "🤖 AI 정밀 항암제 조합":
                             1. 환자를 선택하세요
                             2. '🔬 AI 정밀 항암제 조합 분석 시작' 버튼을 클릭하세요
                             """)
+
+
+# ============ Cellpose Integration ============
+try:
+    from modules.cellpose_page import render_cellpose_page
+    
+    if page == "🔬 세포 이미지 분석":
+        render_cellpose_page()
+except Exception as e:
+    if page == "🔬 세포 이미지 분석":
+        st.error(f"Cellpose module error: {str(e)}")
+        st.info("Please ensure the modules folder exists with cellpose_page.py")
