@@ -6,6 +6,7 @@ RTX 4060 GPU 가속 지원
 import os
 import sys
 import numpy as np
+import cv2
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import torch
@@ -62,7 +63,9 @@ class CellposeAnalyzer:
         image_path: str,
         diameter: Optional[float] = None,
         flow_threshold: float = 0.4,
-        cellprob_threshold: float = 0.0
+        cellprob_threshold: float = 0.0,
+        upscale_factor: float = 1.0,
+        enhance_contrast: bool = False
     ) -> Dict:
         """
         단일 이미지 분석
@@ -81,9 +84,34 @@ class CellposeAnalyzer:
         # 이미지 로드
         img = imread(image_path)
         
+        # Preprocessing: CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        if enhance_contrast:
+            logger.info("  Applying CLAHE preprocessing...")
+            if img.ndim == 2: # Grayscale
+                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+                img = clahe.apply(img)
+            elif img.ndim == 3: # RGB
+                # Convert to LAB, apply to L channel
+                lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
+                l, a, b = cv2.split(lab)
+                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+                cl = clahe.apply(l)
+                limg = cv2.merge((cl,a,b))
+                img = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
+
+        # Upscaling
+        original_shape = img.shape[:2]
+        if upscale_factor > 1.0:
+            logger.info(f"  Upscaling image by {upscale_factor}x...")
+            new_width = int(img.shape[1] * upscale_factor)
+            new_height = int(img.shape[0] * upscale_factor)
+            img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+
+        
         # 직경 설정
         diam = diameter if diameter is not None else self.diameter
         
+        # 세포 분할 실행
         # 세포 분할 실행
         masks, flows, styles = self.model.eval(
             img,
@@ -91,6 +119,12 @@ class CellposeAnalyzer:
             flow_threshold=flow_threshold,
             cellprob_threshold=cellprob_threshold
         )
+        
+        # Downscale masks if upscaled
+        if upscale_factor > 1.0:
+            logger.info("  Downscaling masks to original size...")
+            masks = cv2.resize(masks, (original_shape[1], original_shape[0]), interpolation=cv2.INTER_NEAREST)
+            # Resize flows and styles if needed (omitted for now as they are complex structures)
         
         # 결과 분석
         cell_ids = np.unique(masks)[1:]  # 0은 배경
